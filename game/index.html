@@ -731,6 +731,9 @@ function showTitle(){
   $('#startBtn').addEventListener('click', ()=>{
     AudioSys.ensure();
     AudioSys.blip(520);
+    if(!document.fullscreenElement && document.documentElement.requestFullscreen){
+      document.documentElement.requestFullscreen().catch(()=>{});
+    }
     go('opening');
   });
 }
