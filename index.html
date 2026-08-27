@@ -1,0 +1,1683 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>什么都没有发生</title>
+<style>
+:root{
+  --bg:#0b0b0c;
+  --fg:#d9d4cb;
+  --muted:#6f6a61;
+  --line:#232019;
+  --blood:#8a2f2a;
+  --tape:#8b8578;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{background:var(--bg);color:var(--fg);font-family:"Noto Serif SC","Songti SC","SimSun",serif;line-height:2;overflow-x:hidden}
+button{font:inherit;color:inherit}
+#app{max-width:720px;margin:0 auto;padding:16px 20px 32px;min-height:100vh;display:flex;flex-direction:column}
+#topbar{display:flex;justify-content:space-between;align-items:center;padding:4px 0 12px;border-bottom:1px solid var(--line);font-family:system-ui,sans-serif}
+#chapter{font-size:12px;letter-spacing:.4em;color:var(--muted)}
+#soundBtn{background:none;border:1px solid var(--line);color:var(--muted);font-size:12px;padding:4px 14px;border-radius:999px;cursor:pointer;letter-spacing:.2em}
+#soundBtn:hover{color:var(--fg);border-color:var(--muted)}
+#stage{flex:1;padding:30px 0 8px}
+#media{margin:0 auto 26px;text-align:center;min-height:40px}
+#text{font-size:17px}
+#text p{margin:0 0 16px;font-size:1em;letter-spacing:.07em}
+#text p.dim{color:var(--muted);font-size:.9em}
+#cue{min-height:16px;font-size:12px;color:var(--muted);letter-spacing:.3em;text-align:center;margin-top:2px;font-family:system-ui,sans-serif;animation:cueBlink 1.3s ease-in-out infinite}
+@keyframes cueBlink{0%,100%{opacity:.25}50%{opacity:.9}}
+#hint{min-height:22px;font-size:12px;color:var(--muted);font-family:system-ui,sans-serif;letter-spacing:.25em;text-align:center;margin-top:18px}
+#choices{display:flex;flex-direction:column;gap:10px;margin-top:24px}
+#hud{border-top:1px solid var(--line);padding-top:10px;font-family:ui-monospace,Consolas,monospace;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.choice{background:none;border:0;border-bottom:1px solid var(--line);color:var(--muted);text-align:left;padding:11px 2px;cursor:pointer;font-size:16px;letter-spacing:.08em;display:flex;gap:14px;align-items:baseline}
+.choice .c-key{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--blood);flex:none}
+.choice:hover,.choice:focus-visible{color:var(--fg);border-color:var(--fg);outline:none}
+.btn-main{background:none;border:1px solid var(--muted);color:var(--fg);font-size:16px;letter-spacing:.4em;text-indent:.4em;padding:12px 34px;cursor:pointer;border-radius:2px}
+.btn-main:hover{border-color:var(--fg)}
+.title-screen{text-align:center;padding-top:5vh}
+.title{font-size:32px;font-weight:400;letter-spacing:.5em;text-indent:.5em;margin:20px 0 0;line-height:1.6}
+.sub{color:var(--muted);font-size:13px;letter-spacing:.15em;line-height:2.3;margin:22px 0 40px}
+.tiny{color:var(--muted);font-size:11px;letter-spacing:.3em;margin-top:60px;font-family:system-ui,sans-serif}
+.photo-holder{display:inline-block}
+.photo-holder canvas{image-rendering:pixelated;border:1px solid var(--line);background:#050506;display:block;margin:0 auto}
+.photo-holder .cap{font-size:11px;color:var(--muted);margin-top:8px;letter-spacing:.25em;font-family:system-ui,sans-serif}
+.wave-cap{color:var(--muted);font-size:11px;letter-spacing:.3em;font-family:system-ui,sans-serif;margin-top:8px}
+.nail-wrap{max-width:430px;margin:0 auto;user-select:none;touch-action:none}
+.nail-head{color:var(--muted);font-size:13px;letter-spacing:.3em;margin-bottom:14px}
+.nail-bar{height:58px;border:1px solid var(--line);background:linear-gradient(180deg,#2a2620,#1a1713);border-radius:14px;cursor:ew-resize;display:flex;align-items:center;justify-content:center;color:#8d8578;letter-spacing:.6em;font-size:13px;position:relative;overflow:hidden}
+.nail-bar.active{border-color:var(--tape)}
+.nail-bar.shake{animation:shake .3s}
+.nail-bar .file-pos{position:absolute;top:0;bottom:0;width:3px;background:rgba(217,212,203,.35);left:calc(var(--pos,50%) - 1px);pointer-events:none;transition:left .05s linear}
+.passes{display:flex;gap:26px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.pass{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:12px;letter-spacing:.1em}
+.pass i{width:9px;height:9px;border-radius:50%;border:1px solid var(--muted);display:inline-block}
+.pass.on{color:var(--fg)}
+.pass.on i.done{background:var(--blood);border-color:var(--blood)}
+.pass.done-p{color:var(--muted)}
+.nail-tip,.tape-tip{color:var(--muted);font-size:12px;margin-top:14px;line-height:1.9;font-family:system-ui,sans-serif}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.tape-wrap{max-width:430px;margin:0 auto}
+.window{margin:0 auto;width:min(340px,78vw);height:230px;background:#050607;border:10px solid #1c1a17;position:relative;border-radius:4px}
+.tape-target{position:absolute;opacity:.5;cursor:pointer;border:1px dashed var(--muted)}
+.tape-target:hover{opacity:1}
+.tape-target[data-t="t"]{top:-9px;left:12%;width:76%;height:12px}
+.tape-target[data-t="b"]{bottom:-9px;left:12%;width:76%;height:12px}
+.tape-target[data-t="l"]{left:-9px;top:18%;width:12px;height:64%}
+.tape-target[data-t="r"]{right:-9px;top:18%;width:12px;height:64%}
+.tape-target.dot{width:18px;height:18px;border-radius:50%}
+.tape-target[data-t="a"]{top:24px;right:34px}
+.tape-target[data-t="p"]{bottom:26px;right:34px}
+.tape-target.taped{opacity:1;border-style:solid;background:rgba(139,133,120,.85)}
+.tape-target.taped::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.3),rgba(0,0,0,0),rgba(0,0,0,.3))}
+.window.afternoon .tape-target.taped{animation:tapeFall 1.6s ease-in forwards}
+@keyframes tapeFall{to{transform:translateY(44px) rotate(7deg);opacity:.2}}
+.phone-scene{display:inline-flex;flex-direction:column;align-items:center;gap:6px}
+#clock{font-family:ui-monospace,Consolas,monospace;font-size:56px;letter-spacing:.2em;color:var(--fg);margin-top:4px;line-height:1.2}
+.stats{margin:18px 0 8px;color:var(--muted);font-size:13px;letter-spacing:.12em;line-height:2.4}
+.stats .verdict{color:var(--fg);font-size:15px;letter-spacing:.1em}
+#grain{position:fixed;inset:-24px;pointer-events:none;z-index:998;opacity:.05;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.6'/></svg>");background-size:140px 140px;animation:grainMove .7s steps(5) infinite}
+@keyframes grainMove{0%{background-position:0 0}20%{background-position:-28px 14px}40%{background-position:14px -42px}60%{background-position:-42px -14px}80%{background-position:28px 28px}100%{background-position:0 0}}
+#vignette{position:fixed;inset:0;pointer-events:none;z-index:999;background:radial-gradient(ellipse at center,transparent 52%,rgba(0,0,0,.55) 100%)}
+#stage{transition:opacity .55s ease}
+#fsBtn{margin-left:8px}
+#stamp{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:1000;opacity:0;transition:opacity .5s ease}
+#stamp span{font-size:15px;letter-spacing:.5em;color:var(--muted);text-indent:.5em;font-family:system-ui,sans-serif}
+#stamp.show{opacity:1}
+.term{max-width:640px;margin:0 auto;background:#040405;border:1px solid var(--line);border-radius:6px;text-align:left;padding:16px 18px;min-height:280px;font-family:ui-monospace,Consolas,monospace;font-size:14px;line-height:1.9;color:#b9c4b0}
+.term .tl{white-space:pre-wrap;word-break:break-word}
+.term-row{display:flex;align-items:center;gap:8px;margin-top:10px}
+.term-row .prompt{color:#8a9a80;flex:none}
+#termInput{background:none;border:0;outline:none;color:#d9d4cb;font:inherit;flex:1;caret-color:#b9c4b0;min-width:0}
+#termInput::placeholder{color:#3d4638}
+.btn-phone{background:none;border:1px solid var(--line);border-radius:6px;padding:12px 18px;cursor:pointer;display:inline-flex;flex-direction:column;gap:6px;align-items:center;color:var(--muted)}
+.btn-phone:hover{border-color:var(--tape);color:var(--fg)}
+.breath{animation:breath 4s ease-in-out infinite}
+@keyframes breath{0%,100%{opacity:.45}50%{opacity:1}}
+.report{max-width:420px;margin:0 auto;background:#0d0d0f;border:1px solid var(--line);padding:18px 22px;text-align:left}
+.rep-head{font-family:system-ui,sans-serif;font-size:11px;color:var(--muted);letter-spacing:.2em;border-bottom:1px solid var(--line);padding-bottom:8px;margin-bottom:12px}
+.rep-title{font-size:18px;letter-spacing:.3em;margin-bottom:14px;color:var(--fg)}
+.rep-row{font-size:14px;color:var(--muted);margin:8px 0;letter-spacing:.05em}
+.rep-next{margin-top:18px;background:none;border:1px solid var(--muted);color:var(--muted);font-size:13px;padding:6px 22px;cursor:pointer;letter-spacing:.3em}
+.rep-next:hover{color:var(--fg);border-color:var(--fg)}
+:fullscreen #app{height:100vh;max-height:100vh;overflow:hidden;padding-top:6px}
+:fullscreen #topbar{flex:none}
+:fullscreen #stage{flex:1;overflow-y:auto;scrollbar-width:none;padding-top:10px}
+:fullscreen #stage::-webkit-scrollbar{display:none}
+:fullscreen #media{display:flex;flex-direction:column;align-items:center;justify-content:center}
+:fullscreen #photoCanvas{width:auto;height:18vh}
+:fullscreen #sea{width:auto;height:15vh}
+:fullscreen .term{max-height:36vh;overflow-y:auto;scrollbar-width:none}
+:fullscreen .term::-webkit-scrollbar{display:none}
+:fullscreen .title-screen{padding-top:2vh}
+:fullscreen .btn-phone svg{width:34px;height:51px}
+:fullscreen .report{max-height:32vh;overflow-y:auto;scrollbar-width:none}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+@media (max-width:520px){
+  .title{font-size:26px}
+  #text{font-size:16px}
+}
+</style>
+</head>
+<body>
+<div id="grain" aria-hidden="true"></div>
+<div id="vignette" aria-hidden="true"></div>
+<div id="stamp" aria-hidden="true"><span></span></div>
+<div id="app">
+  <header id="topbar">
+    <div id="chapter">引子</div>
+    <div>
+      <button id="soundBtn" type="button">声 开</button>
+      <button id="fsBtn" type="button">全屏</button>
+    </div>
+  </header>
+  <main id="stage">
+    <div id="media"></div>
+    <div id="text" aria-live="polite"></div>
+    <div id="cue"></div>
+    <div id="hint"></div>
+    <div id="choices"></div>
+  </main>
+  <footer id="hud"><span id="hudL">钱 0 · 沉默 0 · 相信 0 · 说不 0</span><span id="hudR"></span></footer>
+</div>
+<script>
+'use strict';
+/* ================= 工具 ================= */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function mulberry32(a){ return function(){ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ================= 声音（全部现场合成，零文件） ================= */
+const AudioSys = {
+  ctx:null, master:null, muted:false, _noise:null,
+  nodes:{},
+  ensure(){
+    if(!this.ctx){
+      try{
+        const AC = window.AudioContext || window.webkitAudioContext;
+        this.ctx = new AC();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0.9;
+        this.master.connect(this.ctx.destination);
+      }catch(e){}
+    }
+    if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  setMuted(m){
+    this.muted = m;
+    if(this.master) this.master.gain.setTargetAtTime(m ? 0 : 0.9, this.ctx.currentTime, 0.05);
+  },
+  noiseBuf(){
+    if(this._noise) return this._noise;
+    const ctx = this.ctx, len = ctx.sampleRate * 2;
+    const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    let last = 0;
+    for(let i=0;i<len;i++){
+      const w = Math.random()*2 - 1;
+      last = (last + 0.02*w) / 1.02;
+      d[i] = last * 3.5;
+    }
+    this._noise = buf;
+    return buf;
+  },
+  tone(freq, dur, delay, type, vol){
+    if(!this.ctx) return;
+    const t = this.ctx.currentTime + (delay||0);
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = type||'triangle'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(vol||0.1, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g); g.connect(this.master);
+    o.start(t); o.stop(t + dur + 0.05);
+  },
+  noise({dur, vol, ftype, ffreq}){
+    if(!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noiseBuf(); src.loop = true;
+    const f = this.ctx.createBiquadFilter();
+    f.type = ftype||'bandpass'; f.frequency.value = ffreq||2000; f.Q.value = 1;
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(vol||0.15, t + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (dur||0.1));
+    src.connect(f); f.connect(g); g.connect(this.master);
+    src.start(t); src.stop(t + (dur||0.1) + 0.05);
+  },
+  blip(f){ this.tone(f||660, 0.09, 0, 'triangle', 0.08); },
+  chime(){
+    this.tone(660, 0.16, 0, 'triangle', 0.09);
+    this.tone(880, 0.16, 0.13, 'triangle', 0.09);
+    this.tone(1320, 0.34, 0.26, 'triangle', 0.09);
+  },
+  scratch(){
+    if(!this.ctx) return;
+    for(let i=0;i<4;i++) this.noise({dur:0.045, vol:0.12, ftype:'bandpass', ffreq:2600});
+  },
+  tape(){ this.noise({dur:0.09, vol:0.18, ftype:'highpass', ffreq:1600}); },
+  key(){ this.tone(1500, 0.014, 0, 'square', 0.012); },
+  bad(){
+    if(!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(150, t);
+    o.frequency.exponentialRampToValueAtTime(90, t + 0.25);
+    g.gain.setValueAtTime(0.09, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.28);
+    o.connect(g); g.connect(this.master);
+    o.start(t); o.stop(t + 0.3);
+  },
+  fadeStop(node, key){
+    if(!node) return;
+    const ctx = this.ctx, g = node.gain;
+    try{
+      g.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.3);
+    }catch(e){}
+    setTimeout(()=>{
+      try{ node.source && node.source.stop(); }catch(e){}
+      try{ node.oscs && node.oscs.forEach(o=>o.stop()); }catch(e){}
+      if(key) delete this.nodes[key];
+    }, 800);
+  },
+  ambient({drone, ocean, heart}){
+    const ctx = this.ctx; if(!ctx) return;
+    if(drone && !this.nodes.drone){
+      const g = ctx.createGain(); g.gain.value = 0;
+      const o1 = ctx.createOscillator(), o2 = ctx.createOscillator();
+      o1.type = 'sine'; o1.frequency.value = 55;
+      o2.type = 'sine'; o2.frequency.value = 82.41;
+      const o3 = ctx.createOscillator(); o3.type = 'sine'; o3.frequency.value = 55.8;
+      [o1,o2,o3].forEach(o=>{ o.connect(g); o.start(); });
+      g.connect(this.master);
+      g.gain.setTargetAtTime(0.028, ctx.currentTime, 1.2);
+      this.nodes.drone = {gain:g, oscs:[o1,o2,o3]};
+    }else if(!drone && this.nodes.drone){
+      this.fadeStop(this.nodes.drone, 'drone');
+    }
+    if(ocean && !this.nodes.ocean){
+      const src = ctx.createBufferSource(); src.buffer = this.noiseBuf(); src.loop = true;
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 420;
+      const g = ctx.createGain(); g.gain.value = 0;
+      const lfo = ctx.createOscillator(), lg = ctx.createGain();
+      lfo.frequency.value = 0.06; lg.gain.value = 90;
+      lfo.connect(lg); lg.connect(f.frequency); lfo.start();
+      src.connect(f); f.connect(g); g.connect(this.master);
+      g.gain.setTargetAtTime(0.05, ctx.currentTime, 1.5);
+      src.start();
+      this.nodes.ocean = {gain:g, source:src, lfo:lfo};
+    }else if(!ocean && this.nodes.ocean){
+      this.fadeStop(this.nodes.ocean, 'ocean');
+    }
+    if(heart && !this.nodes.heart){
+      const timer = setInterval(()=>{
+        if(!this.ctx) return;
+        const beat = (dt)=>{
+          const t = this.ctx.currentTime + dt;
+          const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+          o.type = 'sine';
+          o.frequency.setValueAtTime(62, t);
+          o.frequency.exponentialRampToValueAtTime(38, t + 0.16);
+          g.gain.setValueAtTime(0.38, t);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+          o.connect(g); g.connect(this.master);
+          o.start(t); o.stop(t + 0.3);
+        };
+        beat(0); beat(0.28);
+      }, 980);
+      this.nodes.heart = {timer};
+    }else if(!heart && this.nodes.heart){
+      clearInterval(this.nodes.heart.timer);
+      delete this.nodes.heart;
+    }
+  },
+  ring(on){
+    if(!this.ctx) return;
+    if(on && !this.nodes.ring){
+      const g = this.ctx.createGain(); g.gain.value = 0;
+      const o1 = this.ctx.createOscillator(), o2 = this.ctx.createOscillator();
+      o1.type = 'sine'; o1.frequency.value = 440;
+      o2.type = 'sine'; o2.frequency.value = 480;
+      o1.connect(g); o2.connect(g); g.connect(this.master);
+      o1.start(); o2.start();
+      const timer = setInterval(()=>{
+        if(!this.ctx){ return; }
+        const onNow = Math.floor(performance.now()/2000) % 2 === 0;
+        g.gain.setTargetAtTime(onNow ? 0.05 : 0.0001, this.ctx.currentTime, 0.08);
+      }, 500);
+      this.nodes.ring = {gain:g, oscs:[o1,o2], timer};
+    }else if(!on && this.nodes.ring){
+      clearInterval(this.nodes.ring.timer);
+      this.fadeStop(this.nodes.ring, 'ring');
+    }
+  }
+};
+
+/* ================= 状态 ================= */
+const S = { money:0, silence:0, trust:0, no:0, photo:false, degrade:0, gave8:false, spoke:false };
+function fx(e){
+  if(!e) return;
+  if(e.money) S.money += e.money;
+  if(e.silence) S.silence += e.silence;
+  if(e.trust) S.trust += e.trust;
+  if(e.no) S.no += e.no;
+  if(e.photo) S.photo = true;
+  if(e.gave8) S.gave8 = true;
+  if(e.spoke) S.spoke = true;
+  updateHUD();
+}
+function updateHUD(){
+  $('#hudL').textContent = `钱 ${S.money} · 沉默 ${S.silence} · 相信 ${S.trust} · 说不 ${S.no}`;
+}
+function setChapter(t){ $('#chapter').textContent = t; }
+
+/* ================= 像素照片（代码生成，越到后面越糊） ================= */
+function drawPhotoOn(cv, res){
+  const W = 120, H = 150;
+  const rand = mulberry32(2007 + res * 13);
+  const off = document.createElement('canvas');
+  off.width = res; off.height = Math.max(3, Math.round(res * H / W));
+  const octx = off.getContext('2d');
+  const iw = off.width, ih = off.height;
+  const cx = iw/2, cy = ih*0.42, rx = iw*0.34, ry = ih*0.30;
+  const img = octx.createImageData(iw, ih);
+  for(let y=0;y<ih;y++){
+    for(let x=0;x<iw;x++){
+      const nx = (x-cx)/rx, ny = (y-cy)/ry;
+      const inFace = nx*nx + ny*ny <= 1;
+      let v;
+      if(inFace){
+        v = 90 + rand()*80;
+        if(ny > 0.6 && Math.abs(nx) < 0.22) v -= 35;
+        if(Math.abs(ny + 0.08) < 0.13 && Math.abs(nx - 0.3) < 0.14) v = 22;
+        if(Math.abs(ny + 0.08) < 0.13 && Math.abs(nx + 0.3) < 0.14) v = 22;
+      }else if(y > ih*0.7){
+        v = 24 + rand()*22;
+      }else{
+        v = 9 + rand()*16;
+      }
+      const k = (y*iw + x)*4;
+      img.data[k] = v; img.data[k+1] = v; img.data[k+2] = v*0.95; img.data[k+3] = 255;
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  const ctx = cv.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = '#050506'; ctx.fillRect(0,0,W,H);
+  ctx.drawImage(off, 0, 0, W, H);
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  for(let y=0;y<H;y+=3) ctx.fillRect(0, y, W, 1);
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  for(let y=0;y<H;y+=7) ctx.fillRect(0, y, W, 1);
+}
+function putPhoto(res, cap){
+  $('#media').innerHTML = `<div class="photo-holder"><canvas id="photoCanvas" width="120" height="150"></canvas><div class="cap">${cap||''}</div></div>`;
+  drawPhotoOn($('#photoCanvas'), res);
+}
+function nextPhoto(cap){
+  S.degrade++;
+  putPhoto(Math.max(5, 28 - 4*S.degrade), cap||'2007 · 像素似乎又低了一点');
+}
+
+/* ================= 海（动画 Canvas） ================= */
+let seaRAF = null;
+function startSea(){
+  $('#media').innerHTML = `<canvas id="sea" width="640" height="230"></canvas><div class="wave-cap">太 平 洋</div>`;
+  const cv = $('#sea');
+  const ctx = cv.getContext('2d');
+  const draw = (time)=>{
+    const w = cv.width, h = cv.height;
+    const grad = ctx.createLinearGradient(0,0,0,h);
+    grad.addColorStop(0,'#0c1116');
+    grad.addColorStop(0.55,'#0f1a21');
+    grad.addColorStop(1,'#0a0a0b');
+    ctx.fillStyle = grad; ctx.fillRect(0,0,w,h);
+    const horizon = h*0.42;
+    ctx.strokeStyle = 'rgba(150,160,170,0.32)';
+    ctx.beginPath(); ctx.moveTo(0,horizon); ctx.lineTo(w,horizon); ctx.stroke();
+    for(let i=0;i<3;i++){
+      ctx.strokeStyle = `rgba(140,155,165,${0.15 - i*0.03})`;
+      ctx.beginPath();
+      const yy = horizon + 16 + i*22;
+      for(let x=0;x<=w;x+=4){
+        const y = yy + Math.sin(x*0.012 + i*1.7 + time*0.0004 + i)*(2+i) + Math.sin(x*0.045 + time*0.001)*1.5;
+        if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+    if(!REDUCED) seaRAF = requestAnimationFrame(draw);
+  };
+  draw(performance.now());
+}
+function stopSea(){ if(seaRAF){ cancelAnimationFrame(seaRAF); seaRAF = null; } }
+
+/* ================= 打字机 ================= */
+let fast = false;
+let typing = null;
+function showCue(label){
+  const cue = $('#cue');
+  if(cue) cue.textContent = label;
+}
+function hideCue(){
+  const cue = $('#cue');
+  if(cue) cue.textContent = '';
+}
+async function say(lines, opts){
+  opts = opts || {};
+  typing = {lines, i:0, waiting:false, opts};
+  const box = $('#text');
+  box.innerHTML = '';
+  $('#choices').innerHTML = '';
+  $('#hint').textContent = opts.hint || '';
+  await startLine();
+}
+async function startLine(){
+  const t = typing;
+  if(!t || t.i >= t.lines.length){ finishSay(); return; }
+  const line = t.lines[t.i];
+  const p = document.createElement('p');
+  if(line.startsWith('.')) p.classList.add('dim');
+  const text = line.replace(/^\./, '');
+  $('#text').appendChild(p);
+  t.p = p; t.text = text; t.fastLine = false; t.waiting = false;
+  const sp = REDUCED ? 0 : (t.opts.speed == null ? 26 : t.opts.speed);
+  for(let i=0;i<text.length;i++){
+    if(t.fastLine){ p.textContent = text; break; }
+    p.textContent = text.slice(0, i+1);
+    await sleep(sp);
+  }
+  if(!typing || typing !== t) return;
+  t.waiting = true;
+  showCue(t.i < t.lines.length - 1 ? '▼ 点击继续' : '▼ 继续');
+  fitText();
+}
+function advance(){
+  const t = typing;
+  if(!t) return;
+  if(!t.waiting){
+    t.fastLine = true;
+    return;
+  }
+  if(t.i < t.lines.length - 1){
+    t.i++;
+    hideCue();
+    startLine();
+  }else{
+    finishSay();
+  }
+}
+function finishSay(){
+  if(!typing) return;
+  const opts = typing.opts;
+  typing = null;
+  hideCue();
+  if(opts.after) opts.after();
+  fitText();
+}
+function showChoices(list){
+  const box = $('#choices');
+  box.innerHTML = '';
+  list.forEach((c,i)=>{
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'choice';
+    b.innerHTML = `<span class="c-key">${i+1}</span><span>${c.t}</span>`;
+    b.addEventListener('click', ()=>choose(c));
+    box.appendChild(b);
+  });
+  fitText();
+}
+function choose(c){
+  AudioSys.blip(660);
+  $('#hint').textContent = '';
+  if(c.fx) fx(c.fx);
+  if(c.goto){
+    $('#choices').innerHTML = '';
+    hideCue();
+    go(c.goto);
+  }
+}
+
+/* ================= 磨指甲 ================= */
+let nailState = null;
+let nailCleanup = null;
+function renderPasses(){
+  const box = $('#passes'); if(!box) return;
+  const names = ['粗面','光面','收尾'];
+  box.innerHTML = '';
+  for(let p=0;p<3;p++){
+    const d = document.createElement('div');
+    d.className = 'pass' + (p===nailState.pass ? ' on' : '') + (p<nailState.pass ? ' done-p' : '');
+    let dots = '';
+    for(let s=0;s<3;s++){
+      dots += `<i class="${s < (p===nailState.pass ? nailState.strokes : (p<nailState.pass ? 3 : 0)) ? 'done' : ''}"></i>`;
+    }
+    d.innerHTML = `<span>${names[p]}</span>${dots}`;
+    box.appendChild(d);
+  }
+}
+function nailStroke(){
+  if(nailState.done) return;
+  AudioSys.scratch();
+  nailState.strokes++;
+  if(nailState.strokes >= 3){
+    if(nailState.pass < 2){ nailState.pass++; nailState.strokes = 0; }
+    else { nailState.strokes = 3; }
+  }
+  renderPasses();
+  if(nailState.pass === 2 && nailState.strokes === 3) completeNail();
+}
+function nailFail(){
+  AudioSys.bad();
+  nailState.strokes = 0;
+  renderPasses();
+  const bar = $('#nailBar');
+  if(bar){
+    bar.classList.remove('shake');
+    void bar.offsetWidth;
+    bar.classList.add('shake');
+  }
+  $('#hint').textContent = '要顺着一个方向。';
+}
+function completeNail(){
+  nailState.done = true;
+  if(nailCleanup){ nailCleanup(); nailCleanup = null; }
+  AudioSys.chime();
+  $('#hint').textContent = '';
+  say([
+    '十个手指，她花了快一个小时。',
+    '她说，这一面磨形状，这一面抛光，最后一面不要来回蹭，要顺着一个方向。',
+    '磨完她把我的手翻过来看了看，摸了一下。',
+    '她说，行了。摸吧，想摸哪都行。',
+    '.中间她说过一句话：要是以后我不在了，就再没有人给你抛指甲了。'
+  ],{after:()=>{ fx({trust:1}); go('report'); }});
+}
+function nailMini(){
+  nailState = {pass:0, strokes:0, done:false};
+  $('#media').innerHTML = `
+    <div class="nail-wrap">
+      <div class="nail-head">磨到不刮人为止</div>
+      <div class="nail-bar" id="nailBar"><span>指甲</span><span class="file-pos"></span></div>
+      <div class="passes" id="passes"></div>
+      <div class="nail-tip">用鼠标或手指，从左往右，一下一下地磨。收尾那一面，千万不要来回蹭。</div>
+    </div>`;
+  renderPasses();
+  const bar = $('#nailBar');
+  let active = false, lastX = 0;
+  const posEl = $('.file-pos');
+  const onDown = e=>{
+    active = true;
+    lastX = e.clientX;
+    bar.classList.add('active');
+    posEl.style.setProperty('--pos', '0%');
+  };
+  const onMove = e=>{
+    if(!active || nailState.done) return;
+    const dx = e.clientX - lastX;
+    if(dx > 42){ nailStroke(); lastX = e.clientX; }
+    else if(dx < -30){ nailFail(); lastX = e.clientX; }
+  };
+  const onUp = ()=>{ active = false; bar.classList.remove('active'); };
+  const onKey = e=>{
+    if(e.code === 'Space' && !e.repeat){
+      e.preventDefault();
+      nailStroke();
+    }
+  };
+  bar.addEventListener('pointerdown', onDown);
+  window.addEventListener('pointermove', onMove);
+  window.addEventListener('pointerup', onUp);
+  document.addEventListener('keydown', onKey);
+  nailCleanup = ()=>{
+    bar.removeEventListener('pointerdown', onDown);
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    document.removeEventListener('keydown', onKey);
+  };
+}
+
+/* ================= 贴胶带 ================= */
+let tapeLeft = 6, tapeDone = false;
+function tapeMini(){
+  tapeLeft = 6; tapeDone = false;
+  $('#media').innerHTML = `
+    <div class="tape-wrap">
+      <div class="window" id="win">
+        <div class="tape-target" data-t="t"></div>
+        <div class="tape-target" data-t="b"></div>
+        <div class="tape-target" data-t="l"></div>
+        <div class="tape-target" data-t="r"></div>
+        <div class="tape-target dot" data-t="a"></div>
+        <div class="tape-target dot" data-t="p"></div>
+      </div>
+      <div class="tape-tip">把每一处漏光都贴上。她睡觉，不能有一丝光。</div>
+    </div>`;
+  $('#hint').textContent = '还有 6 处漏光';
+  $$('.tape-target').forEach(el=>{
+    el.addEventListener('click', ()=>tapTape(el));
+  });
+}
+function tapTape(el){
+  if(tapeDone || el.classList.contains('taped')) return;
+  el.classList.add('taped');
+  AudioSys.tape();
+  tapeLeft--;
+  $('#hint').textContent = tapeLeft > 0 ? `还有 ${tapeLeft} 处漏光` : '';
+  if(tapeLeft === 0){
+    tapeDone = true;
+    $('#hint').textContent = '贴好了。';
+    setTimeout(()=>{
+      const win = $('#win');
+      if(!win) return;
+      win.classList.add('afternoon');
+      AudioSys.tape();
+      say([
+        '.下午三点，玻璃最烫。胶带一条一条地往下掉。',
+        '.没有人告诉她们不用贴了。她们明天早上会再来贴。',
+        '.这件事没有人教她们。是她们自己试出来的。'
+      ],{after:()=>go('m8')});
+    }, 1100);
+  }
+}
+
+/* ================= 十一秒 ================= */
+let countdownTimer = null;
+function startCountdown(){
+  AudioSys.ring(false);
+  $('#media').innerHTML = `
+    <div class="phone-scene">
+      <svg viewBox="0 0 80 120" width="56" height="84" aria-hidden="true">
+        <rect x="10" y="4" width="60" height="112" rx="10" fill="#101013" stroke="#2a2620"/>
+        <rect x="22" y="16" width="36" height="26" fill="#0d0d0f" stroke="#232019"/>
+        <circle cx="40" cy="58" r="7" fill="none" stroke="#3a352c"/>
+        <line x1="22" y1="78" x2="58" y2="78" stroke="#3a352c"/>
+        <line x1="22" y1="90" x2="58" y2="90" stroke="#3a352c"/>
+      </svg>
+      <div id="clock">11</div>
+    </div>`;
+  $('#hint').textContent = '安静。什么都别做。';
+  $('#hint').classList.add('breath');
+  showChoices([
+    {t:'好，我转。', fx:{money:5, spoke:true}, goto:'e1'},
+    {t:'不。', fx:{no:1, spoke:true}, goto:'e3'}
+  ]);
+  let n = 11;
+  const el = $('#clock');
+  countdownTimer = setInterval(()=>{
+    n--;
+    if(n > 0){
+      el.textContent = n;
+      AudioSys.blip(330);
+    }else{
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      el.textContent = '0';
+      $('#hint').textContent = '';
+      $('#hint').classList.remove('breath');
+      $('#choices').innerHTML = '';
+      say([
+        '我数了一下，十一秒。',
+        '她那边是海。我这边是维港。两边都没有人说话。',
+        '她说，行。',
+        '她说，我知道了。',
+        '她挂了。'
+      ],{after:()=>go('aftermath')});
+    }
+  }, 1000);
+}
+function showAftermath(){
+  setChapter('尾声 · 香港 · 凌晨');
+  say([
+    '我把手机放在床头柜上，屏幕朝下。',
+    '然后我做了一件事，至今不知道为什么：我把手放在胸口，数了一下。',
+    '心跳很稳。',
+    '我又数了一遍，还是很稳。一分钟六十几下，和平时没有区别。',
+    '我坐在那里，手按着自己的胸口，像一个医生在给别人做检查。',
+    '我想，原来是这样。',
+    '那天剩下的时间，我什么也没干。',
+    '我在房间里待到天黑又到天亮，看着维多利亚港从蓝色变成灰色再变成黑色。',
+    '早晨六点，维港对面的金融中心，一栋一栋地开始亮灯。',
+    '中间助理敲过一次门，问晚餐怎么安排。我说，不用了。',
+    '我没有哭。我一直在等我哭。',
+    '我后来无数次回想过，那两天她除了五千万还说了什么。',
+    '海很大。这层楼太大。她躲在卫生间里。就这些，我全记得，一个字不差。',
+    '我记不起来的是她的声音——她说"我知道了"的时候，是什么语气。',
+    '我想不起来。后来我就不想了。'
+  ],{after:()=>go('e1')});
+}
+
+/* ================= 场景 ================= */
+function showTitle(){
+  setChapter('引子');
+  $('#media').innerHTML = `
+    <div class="title-screen">
+      <h1 class="title">什么都没有发生</h1>
+      <p class="sub">一颗卵子的重量，三点五微克。<br>五千万美元现金的重量，两点五吨。</p>
+      <button id="startBtn" class="btn-main" type="button">开始</button>
+      <p class="tiny">本文纯属虚构 · 不设版权</p>
+    </div>`;
+  $('#text').innerHTML = '';
+  $('#choices').innerHTML = '';
+  $('#hint').textContent = '';
+  $('#startBtn').addEventListener('click', ()=>{
+    AudioSys.ensure();
+    AudioSys.blip(520);
+    go('opening');
+  });
+}
+function showOpening(){
+  setChapter('开篇 · 蒙太奇拉古纳海滩');
+  $('#media').innerHTML = `
+    <div class="phone-scene">
+      <svg viewBox="0 0 80 120" width="52" height="78" aria-hidden="true">
+        <rect x="10" y="4" width="60" height="112" rx="10" fill="#101013" stroke="#2a2620"/>
+        <rect x="22" y="16" width="36" height="26" fill="#0d0d0f" stroke="#232019"/>
+        <circle cx="40" cy="58" r="7" fill="none" stroke="#3a352c"/>
+        <line x1="22" y1="78" x2="58" y2="78" stroke="#3a352c"/>
+        <line x1="22" y1="90" x2="58" y2="90" stroke="#3a352c"/>
+      </svg>
+      <div class="wave-cap">蒙太奇拉古纳海滩 · 电话</div>
+    </div>`;
+  say([
+    '一颗卵子的重量，三点五微克。',
+    '五千万美元现金的重量，两点五吨。',
+    '她在蒙太奇拉古纳海滩的电话里向我要的是后者，抵押的是前者。',
+    '她去那里是为了取卵。DY的孩子预计2027年出生，快一点的话还能属马。',
+    '这是她主动提的。',
+    '到了诊所，她说：没有五千万，不取。'
+  ],{after:()=>go('opening2')});
+}
+function showOpening2(){
+  setChapter('开篇 · 空置的楼层');
+  startSea();
+  say([
+    '那一层包下来，三十天，一百万美元，为了她的隐私。',
+    '她住了八天就走了。',
+    '剩下的二十二天，酒店的清洁工每天照常上去。',
+    '一个墨西哥女人推着车，一间一间进：换毛巾，擦台面，把被角掖好，退出来把门带上。',
+    '做完一整层，两个小时。',
+    '助理问她，没人住，为什么还要做。',
+    '她说，登记上写着有人。',
+    '一座失去皇后的凡尔赛宫。',
+    '我突然意识到，苏夏喜欢这个。',
+    '苏夏喜欢一个地方因为她而空着。什么都不发生。',
+    '与蒙太奇拉古纳海滩一起空置的，还有一架湾流G700，尴尬地停在Van Nuys。',
+    '机组每天照常报到。',
+    '没有人为它们做任何事。它们只是空着。'
+  ],{after:()=>go('opening3')});
+}
+function showOpening3(){
+  setChapter('开篇 · 第八天');
+  startSea();
+  AudioSys.ring(true);
+  setTimeout(()=>AudioSys.ring(false), 2600);
+  say([
+    '第八天，她打了那个电话。之后没有人再见过她。'
+  ],{after:()=>go('pro')});
+}
+function showPro(){
+  setChapter('引子 · 2007');
+  say([
+    '2007年，已经有人替她烧钱了。那年我刚进北大。',
+    '北大宿舍，一年一千块的房租。',
+    '一台联想IBM的老机器，分辨率糊得很。',
+    'QQ弹出一个窗口。代言人是她。'
+  ],{after:()=>{
+    putPhoto(26, 'QQ 弹窗 · 2007');
+    showChoices([
+      {t:'把这张图存下来', fx:{photo:true}, goto:'pro2'},
+      {t:'关掉窗口', goto:'e4'}
+    ]);
+  }});
+}
+function showPro2(){
+  setChapter('引子 · 2007');
+  say([
+    '我在校内网上找到她，发了好友申请。',
+    '留言我写了删，删了写，弄了大概四十分钟。'
+  ],{after:()=>showChoices([
+    {t:'最后发出去一句：你好', fx:{trust:1}, goto:'pro3'},
+    {t:'最后发出去一句：我认识你很久了', fx:{silence:1}, goto:'pro3'},
+    {t:'最后什么都没写', fx:{silence:1}, goto:'pro3'}
+  ])});
+}
+function showPro3(){
+  say([
+    '她没有通过。',
+    '她也许根本没用过校内网。',
+    '我没有再申请第二次。',
+    '后来这些年，我做每一件事都在想：到了什么程度，她会通过。',
+    '第一个十亿的时候想过，一百亿的时候想过。',
+    '后来我不想了。人人网早就倒闭了。'
+  ],{after:()=>go('pro4')});
+}
+function showPro4(){
+  setChapter('引子 · 2011');
+  say([
+    '2011年，北京冷。我买了一件羽绒服，一百五十块。',
+    '我记得这个价格，因为我犹豫了三天。',
+    '同一年，她拍了一部一亿五千万的电影《战国》。',
+    '孙红雷、吴镇宇、金喜善、中井贵一、姜武——',
+    '就像十九年后的蒙太奇与湾流一样，被请来做陪衬。',
+    '他们不知道自己为什么出现在这里。来都来了，总得发生些什么。',
+    '但是什么都没有发生。',
+    '再后来，是一亿五千万美元的《长城》。张艺谋，刘德华，马特·达蒙。',
+    '再后来是成龙。苏夏宇宙的名单越来越长。',
+    '我那时已经在美国了，读书，创业，越来越忙。',
+    '唯一没变的是，每换一台设备，无论多麻烦，我都把那张QQ图片导过去。'
+  ],{after:()=>showChoices([
+    {t:'换一台设备，把那张图导过去。', goto:'pro5'}
+  ])});
+}
+function showPro5(){
+  setChapter('引子 · 美国');
+  putPhoto(20, '导进新设备。像素好像又低了一点');
+  say([
+    '十九年，换了很多台设备。每一次，我都把它导过去。',
+    '十九年后，名单上加了我。'
+  ],{after:()=>go('meet')});
+}
+function showMeet(){
+  setChapter('第一幕 · 瑰丽酒店');
+  nextPhoto('2007 · 那张图，跟了我十九年');
+  say([
+    '第一次见面在瑰丽酒店。',
+    '她比照片上瘦，穿得很随意，靠在沙发上。',
+    '我看着她，忽然想不起来我等的是什么。',
+    '我带她去看卡特兰的香蕉。她看了很久，问我，这个多少钱。'
+  ],{after:()=>showChoices([
+    {t:'六百二十万美元。', goto:'meet2'},
+    {t:'我没说话。', fx:{silence:1}, goto:'meet2'}
+  ])});
+}
+function showMeet2(){
+  $('#media').innerHTML = `
+    <svg viewBox="0 0 240 200" width="180" height="150" aria-hidden="true">
+      <rect x="0" y="0" width="240" height="200" fill="#0e0e10"/>
+      <path d="M70,150 Q60,70 130,40 Q190,18 205,52" stroke="#c9bfa4" stroke-width="16" fill="none" stroke-linecap="round"/>
+      <path d="M70,150 Q60,70 130,40 Q190,18 205,52" stroke="#e5dcc3" stroke-width="7" fill="none" stroke-linecap="round"/>
+      <rect x="94" y="56" width="58" height="15" fill="#8b8578" opacity="0.92" transform="rotate(-18 123 63)"/>
+      <text x="12" y="188" fill="#6f6a61" font-size="10" font-family="sans-serif">卡特兰，《喜剧演员》，2019</text>
+    </svg>`;
+  say(['她说，那它烂了怎么办。'],{after:()=>showChoices([
+    {t:'烂了就再买一根。', fx:{trust:1}, goto:'meet3'},
+    {t:'我没说话。', fx:{silence:1}, goto:'meet3'}
+  ])});
+}
+function showMeet3(){
+  nextPhoto('像素好像又低了一点');
+  say([
+    '她说，不管了，我们去看电影吧。',
+    '她说放映厅里除了我们两个，不能有任何人。',
+    '我让助理把电影院所有的座位都买下来。',
+    '麻烦的是已经卖出去的票。那天在影院门口领钱的，有二十六个人。',
+    '看完，她把微信头像换成了朱迪警官。'
+  ],{after:()=>{ fx({money:1}); go('nail'); }});
+}
+function showNail(){
+  setChapter('第一幕 · 瑰丽酒店 · 夜');
+  say([
+    '晚上，我把手放到她身上，被她推开了。',
+    '她从包里翻出一个小袋子，里面一排东西，像一套很小的工具。',
+    '她说，你的指甲扎得我痛。',
+    '她把我的手放在她腿上，一根一根磨。',
+    '她说，磨到不刮人为止。'
+  ],{after:()=>nailMini()});
+}
+let reportPage = 0;
+function showReport(){
+  setChapter('第一幕 · 三个月后');
+  reportPage = 0;
+  renderReportPage();
+}
+function renderReportPage(){
+  const pages = [
+    {title:'项目与合作方', rows:['《战国》 · 一亿五千万', '《长城》 · 一亿五千万美元', '《大唐荣耀》 · 领衔', '再后来是成龙。名单越来越长。']},
+    {title:'股权与公司', rows:['苏国庆 · 关联', '夏心爱 · 关联', '代持结构 · 若干', '……']},
+    {title:'账户与房产', rows:['关联账户 · 若干', '北京 · 租', '上海 · 买', '还有一些别的']},
+    {title:'人物', rows:['男男女女 · 若干', '（这一页，我觉得是最不重要的）']}
+  ];
+  const p = pages[Math.min(reportPage, pages.length-1)];
+  $('#media').innerHTML = `
+    <div class="report" id="reportDoc">
+      <div class="rep-head">关于她的调查 · 第 ${reportPage+1} 页 / 共四十余页</div>
+      <div class="rep-title">${p.title}</div>
+      ${p.rows.map(r=>`<div class="rep-row">${r}</div>`).join('')}
+      <button class="rep-next" id="repNext" type="button">${reportPage >= pages.length-1 ? '合上' : '下一页'}</button>
+    </div>`;
+  $('#hint').textContent = '一周就做完了。四十几页。';
+  $('#repNext').addEventListener('click', ()=>{
+    AudioSys.blip(520);
+    reportPage++;
+    if(reportPage >= pages.length){
+      $('#media').innerHTML = '';
+      $('#hint').textContent = '';
+      say([
+        '里面有一些事，她后来跟我讲过。讲的和上面写的不太一样。我没有说。',
+        '有一些事，她一直没讲。我也没有问。',
+        '我全部相信她说的。',
+        '那份东西我留着，一直留到现在。',
+        '但是我一个字也不信。'
+      ],{after:()=>go('m1')});
+    }else{
+      renderReportPage();
+    }
+  });
+}
+function showM1(){
+  setChapter('第二幕 · 特纳里费 · 降落前');
+  startSea();
+  say([
+    '她说，香港人太多，会被认出来，我们出去走走。',
+    '她在地图上指了一下特纳里费。',
+    '第二天中午，我们一行三十个人出发了。A330在机场等着。',
+    '飞机的卧室里，她问我：我的名字好听吗。',
+    '我说，好听。',
+    '她说，我爸爸的姓和我妈妈的姓拼在一起的，是不是很巧。',
+    '我说，我第一天就记住了。',
+    '她抱着我说，以后别叫我苏夏了，叫我妈妈吧。',
+    '好，妈妈。'
+  ],{after:()=>go('m2')});
+}
+function showM2(){
+  setChapter('第二幕 · 特纳里费');
+  say([
+    '落地以后，机长过来告诉我：老板，岛上一开始不让降，他们没见过这么大的私人飞机。',
+    '岛上规矩一样，周围不能有人。助理去处理了。没有人问为什么。',
+    '丽兹卡尔顿正对着大西洋，落地窗太大。',
+    '她睡觉不能有一丝光。助理用黑胶带把整个房间贴起来。',
+    '外面亮如白昼，里面黑得像禁闭室。',
+    '胶带一晒就掉，每天要重贴。',
+    '助理一共十一个人，早上六点半到，等我们睡了才走。',
+    '贴胶带的是两个女孩：一个负责窗框，一个负责空调和插座的指示灯。贴完再检查三遍。',
+    '胶带买了三十卷，后来又补了二十卷。',
+    '她们发现下午三点以后贴的最容易掉——那时候玻璃最烫，后来改成早上贴。',
+    '这件事没有人教她们，是她们自己试出来的。她们互相之间会讨论，像讨论一项工艺。',
+    '她知道那两个女孩叫什么。我不知道。'
+  ],{after:()=>go('m3')});
+}
+function showM3(){
+  setChapter('第二幕 · 泰德公园');
+  say([
+    '我们在泰德公园的公路边停下看日落。',
+    '助理从车上搬下来玫瑰花，开了香槟。',
+    '妈妈看着云海说，好美。不过不如青海德令哈的日落。',
+    '我是青海人。',
+    '我没有说。',
+    '夜晚我们在山顶看星星，穿着棉袄还是冷。',
+    '妈妈说，许个愿吧。'
+  ],{after:()=>showChoices([
+    {t:'你许了什么。', fx:{trust:1}, goto:'m4'},
+    {t:'我不问。', fx:{silence:1}, goto:'m4'}
+  ])});
+}
+function showM4(){
+  setChapter('第二幕 · 去马尔代夫');
+  say([
+    '妈妈说，不告诉你。',
+    '她说，太美了。但就是太冷了，我们去马尔代夫好不好。',
+    '特纳里费零下十五度，马尔代夫二十七度。直线距离九千五百公里，飞十一个小时。',
+    '马尔代夫的机场太小了，宽体客机中途得换成小飞机。',
+    '妈妈说，小飞机声音好吵。还是大飞机好。',
+    '去马尔代夫的飞机卧室里，妈妈跟我说：她许的愿，是和我要一个孩子。',
+    '必须DY。',
+    '我没有问过为什么。我以为她怕疼。'
+  ],{after:()=>go('m5')});
+}
+function showM5(){
+  setChapter('第二幕 · 印度洋 · 星链');
+  say([
+    '中途，妈妈突然坐起来找手机，连上星链，说：糟了。',
+    '我问，怎么了。',
+    '她说，有个人要威胁我，问了三天了，我一直没回。',
+    '她说，以前跟我一起的，财务，进去了，扛了事。',
+    '出来走投无路，一定要找我。',
+    '我说，干脆报警抓了。',
+    '她说，你不懂。'
+  ],{after:()=>showChoices([
+    {t:'要多少。', fx:{trust:1}, goto:'m6'},
+    {t:'我没说话。', fx:{silence:1}, goto:'m6'}
+  ])});
+}
+function showM6(){
+  say([
+    '她打字打了很久，删了改，改了删。打完把手机扣在腿上，过一会儿又翻过来看。',
+    '我说，你给了吗。',
+    '她说，给了。',
+    '多少。',
+    '八万。',
+    '我说，这个也用得着想三天。',
+    '她没说话。',
+    '那天剩下的时间，她一直没怎么说话。落地了才睡着。'
+  ],{after:()=>go('m7')});
+}
+function showM7(){
+  setChapter('第二幕 · 索尼娃贾尼');
+  say([
+    '最早到索尼娃贾尼的是妈妈的箱子。',
+    '三十个人的行李，小飞机装不下，分了三架。',
+    '妈妈只有一只箱子，单独一架。她说，不要和别人的放在一起。',
+    '索尼娃贾尼，no news, no shoes。妈妈放心了。',
+    '酒店管家、保镖、助理，一共配了二十六个人。还有两个无人机手，远远跟着。',
+    '助理们又开始贴胶带了。空调的灯，插座的灯，一遍又一遍。'
+  ],{after:()=>tapeMini()});
+}
+function showM8(){
+  setChapter('第二幕 · 马尔代夫 · 夜');
+  say([
+    '晚上，我们像交换暗号一样交换了彼此的前任。',
+    '就像一个王朝在核对年号。',
+    '妈妈不愿意有任何差池。',
+    '不过妈妈有个禁忌词：那个运动员，不能提。',
+    '我没提。虽然我知道，妈妈背上的纹身，是因为那个运动员纹的。',
+    '可能因为太大了，洗不掉。'
+  ],{after:()=>go('m9')});
+}
+function showM9(){
+  setChapter('第二幕 · 彩礼');
+  say([
+    '她说，现在我们是一家人了。我爸妈把我养这么大不容易，你得给彩礼。',
+    '她报了两个名字，苏国庆、夏心爱，和两个账号。',
+    '三千万，人民币。'
+  ],{after:()=>showChoices([
+    {t:'转。', fx:{money:3}, goto:'m10'},
+    {t:'问，为什么是两个名字。', fx:{trust:1}, goto:'m10'},
+    {t:'不转。', fx:{no:1}, goto:'m10'}
+  ])});
+}
+function showM10(){
+  setChapter('第二幕 · 夜谈');
+  say([
+    '我转了。',
+    '那两个名字，我是在那四十几页里第一次见到的。',
+    '过了一会儿，她把手机递过来给我看。',
+    '夏心爱回了两个字：收到。',
+    '有一次妈妈说，你知道我要这些东西的时候在想什么吗。',
+    '她说，我在想，你会不会有一次说不。',
+    '我说，不会。',
+    '她说，那就没意思了。',
+    '我想，我又有什么做不到吗。'
+  ],{after:()=>go('m11')});
+}
+function showM11(){
+  setChapter('第二幕 · 深夜');
+  say([
+    '太无聊的时候，我在摆弄那张2007年的QQ图片，想传到新设备上。',
+    '妈妈把头凑过来：你怎么背着我存别的女人的照片。这是谁。',
+    '我沉默了。什么也没说。',
+    '她看图太糊了，就去忙别的了。'
+  ],{after:()=>showChoices([
+    {t:'那天晚上，我把那张图删了。', goto:'m12'},
+    {t:'留着。', goto:'m12'}
+  ])});
+}
+function showM12(){
+  say([
+    '第二天，我又从旧手机里把它找回来了。',
+    '妈妈手机也刷个不停。我问她看什么。',
+    '她说，没什么，就是撕番位的那些破事。',
+    '撕番位：一部戏只能有一个明星排第一。男一女一，也只能有一个人排第一。',
+    '我说，无聊啊。',
+    '她说，是啊。更难的是，有时候剧组夫妻，一进组四五十天，一般和一个男的拍戏，晚上做爱，白天还要撕番位。',
+    '我说，太反人性了。',
+    '她说是啊。不过拍完戏了，无论之前做过多少次爱，就当一切都没发生。',
+    '然后她又看了半个小时。'
+  ],{after:()=>go('m13')});
+}
+function showM13(){
+  setChapter('第二幕 · 2026年1月2日');
+  say([
+    '2026年1月2日，索尼娃贾尼，新的一年，我向妈妈求婚了。',
+    '是1月1日早上决定的。戒指在香港。',
+    '岛上没有卖戒指的地方。助理坐水上飞机去了马累，下午回来。戒指装在一个酒店的信封里。',
+    '妈妈说，钻戒太小了。',
+    '妈妈说，没事，以后补个大的。',
+    '另外，你能来北京吗。',
+    '我沉默了。'
+  ],{after:()=>showChoices([
+    {t:'我说，好。', fx:{trust:1}, goto:'m14'},
+    {t:'我没说话。', fx:{silence:1}, goto:'m14'}
+  ])});
+}
+function showM14(){
+  say([
+    '她以为我不想去。',
+    '妈妈说，你为什么对我这么好。',
+    '我说，因为我喜欢你。',
+    '她说，那你以前对别人也这样吗。',
+    '我说，没有。',
+    '她笑了一下，没说话。'
+  ],{after:()=>go('m15')});
+}
+function showM15(){
+  setChapter('第二幕 · 第十四天');
+  say([
+    '有一天早上我醒得早，她不在床上。',
+    '我出去看，她坐在露台上，对着海。整个海是黑的。没开灯，天还没亮。',
+    '我问她，怎么起这么早。',
+    '她说，我在算日子。',
+    '她说，你回去睡吧。',
+    '我回去睡了。再醒过来的时候，她已经化好妆了。',
+    '在马尔代夫待了十四天，没有一个人认出她。',
+    '第十三天晚上在餐厅，她把墨镜摘了。过了一会儿，帽子也摘了，放在桌上。',
+    '隔壁桌是一对德国老夫妻。服务生是斯里兰卡人。没有人多看她一眼。',
+    '吃完她把帽子戴回去了。',
+    '妈妈说，我们回去吧。',
+    '她说，太安静了。'
+  ],{after:()=>go('hk1')});
+}
+function showHK1(){
+  setChapter('第三幕 · 香港 · 见父母');
+  startSea();
+  say([
+    '回到香港，妈妈见了我父母。',
+    '当天晚上她说，家里要筹备两家见面和婚事，尽可能多打点。',
+    '还是苏国庆和夏心爱。',
+    '我说，一天一张卡限额一百万。',
+    '妈妈说，太慢了。',
+    '五张卡，两个账号，轮着转。'
+  ],{after:()=>showChoices([
+    {t:'转完。', fx:{money:5}, goto:'hk2'},
+    {t:'问，为什么总是这两个名字。', fx:{trust:1}, goto:'hk2'},
+    {t:'停手。', fx:{no:1}, goto:'hk2'}
+  ])});
+}
+function showHK2(){
+  setChapter('第三幕 · 春节');
+  say([
+    '妈妈说，效率太低了。',
+    '我说，过年把咱爹妈接到香港来一起过吧。',
+    '妈妈说，今年已经定好在海南过年了。明年吧。',
+    '春节，维港放烟花，来了一百万人。',
+    '没有她。',
+    '凌晨三点，我把父母送回去。',
+    '路上很空。红灯没有一辆车在等，我还是停了。'
+  ],{after:()=>go('hk3')});
+}
+function showHK3(){
+  setChapter('第三幕 · 情人节');
+  say([
+    '妈妈说，先不见了。马上去洛杉矶取卵了，手头的事情要先处理完。',
+    '妈妈又问，能来北京吗。',
+    '我沉默了。',
+    '她没有说北京有什么。我也没问。',
+    '妈妈说，香港必须买一套房子，写她的名字。',
+    '我说，好吧。',
+    '情人节也没见面。'
+  ],{after:()=>go('hk4')});
+}
+function showHK4(){
+  setChapter('第三幕 · 北京 · 冬天');
+  say([
+    '有一次她在电话里说，今天早上抽了八管血。',
+    '我说，这么多。',
+    '她说，还好。',
+    '我说，辛苦了。',
+    '然后我们聊了别的。',
+    '后来我才知道，那种抽血要空腹，要在月经周期的第二天或者第三天，日子不能错。',
+    '她那天早上大概六点就出门了。北京的冬天，天还没亮。',
+    '后来的检查越来越多。',
+    '助理每月的汇总付款单里多了一项：抽血、激素六项、B超、AMH。',
+    '要看她还有多少储备，能取出来几个，值不值得往下走。',
+    '这些都是在北京做的。',
+    '我不知道是哪家医院。我也不知道，她是自己去的，还是有人陪。'
+  ],{after:()=>go('hk5')});
+}
+function showHK5(){
+  setChapter('第三幕 · 香港 · 看房');
+  say([
+    '2月25日，她落地香港。',
+    '她说不去洛杉矶了，除非先看到香港的房子。',
+    '我把过去半年看的十几套房都发给她。她都嫌不好看。',
+    '那十几套房，我一套也没去过。是助理花了半年，一间一间挑的。',
+    '其中有一套在半山，视频里能看见维港，拍的是傍晚。',
+    '有一个瞬间，镜头晃了一下，拍到了拍视频的人的影子在墙上。',
+    '我看着那个影子想：这个人是谁，他今天走了多少路，看了多少房，',
+    '他知不知道，这套房是给谁看的。'
+  ],{after:()=>showChoices([
+    {t:'再发一遍，让她挑。', fx:{money:2}, goto:'hk6'},
+    {t:'问她，这套房到底是给谁看的。', fx:{trust:1}, goto:'hk6'}
+  ])});
+}
+function showHK6(){
+  setChapter('第三幕 · 洛杉矶 · 出发前');
+  say([
+    '时间太紧，她还是上了去洛杉矶的G700。',
+    '2月28日，飞到蒙太奇拉古纳海滩。',
+    '那一层包下来，三十天，一百万美元，为了她的隐私。',
+    '她住了八天就走了。'
+  ],{after:()=>go('call')});
+}
+function showCall(){
+  setChapter('第三幕 · 蒙太奇 · 第八天');
+  startSea();
+  AudioSys.ring(true);
+  $('#media').innerHTML = `
+    <button class="btn-phone" id="phoneBtn" type="button">
+      <svg viewBox="0 0 80 120" width="44" height="66" aria-hidden="true">
+        <rect x="10" y="4" width="60" height="112" rx="10" fill="#101013" stroke="#2a2620"/>
+        <rect x="22" y="16" width="36" height="26" fill="#0d0d0f" stroke="#232019"/>
+        <circle cx="40" cy="58" r="7" fill="none" stroke="#3a352c"/>
+        <line x1="22" y1="78" x2="58" y2="78" stroke="#3a352c"/>
+        <line x1="22" y1="90" x2="58" y2="90" stroke="#3a352c"/>
+      </svg>
+      <span>来电 · 接起</span>
+    </button>`;
+  $('#hint').textContent = '第八天 · 凌晨。电话响了。';
+  $('#phoneBtn').addEventListener('click', ()=>{
+    AudioSys.ring(false);
+    AudioSys.blip(740);
+    $('#hint').textContent = '';
+    say([
+      '我接起来。她那边是下午，我这边是凌晨。',
+      '她说，五千万，美元。',
+      '她说，海很大。这层楼太大了，有回声。',
+      '她说，诊所问我，孩子的父亲什么时候到。',
+      '她说，想好了吗。'
+    ],{after:()=>showChoices([
+      {t:'好，我转。', fx:{money:5, gave8:true}, goto:'e2'},
+      {t:'让我想想。', goto:'day8hangup'},
+      {t:'不。', fx:{no:1}, goto:'e3'}
+    ])});
+  });
+}
+function showDay8Hangup(){
+  setChapter('第三幕 · 香港 · 凌晨');
+  say([
+    '我没有说话。',
+    '我听见她那边有海。',
+    '过了一会儿，她说，好。',
+    '她挂了。',
+    '我认识她以来，没有对她说过"让我想想"。',
+    '不是慷慨，是害怕。害怕下一秒的答案。',
+    '我把手机放在床头柜上，屏幕朝下。'
+  ],{after:()=>go('term')});
+}
+function showDay9(){
+  setChapter('第三幕 · 第二天');
+  startSea();
+  say([
+    '第二天她打回来。',
+    '她说，海很大。',
+    '她说，这层楼太大了，有回声。早上有人来打扫，我躲在卫生间里等她们走。',
+    '我说，可以不让她们来。',
+    '她说，不用。',
+    '她说，诊所问我，孩子的父亲什么时候到。',
+    '我说，我可以派人过去。',
+    '她说，不用。',
+    '她说，想好了吗。'
+  ],{after:()=>startCountdown()});
+}
+
+/* ================= Claude Code 终端 ================= */
+let termState = null;
+async function termType(text){
+  const box = $('#termLines');
+  if(!box) return;
+  const div = document.createElement('div');
+  div.className = 'tl';
+  box.appendChild(div);
+  const sp = REDUCED ? 0 : 9;
+  for(let i=0;i<text.length;i++){
+    if(fast){ div.textContent = text; break; }
+    div.textContent = text.slice(0, i+1);
+    await sleep(sp);
+  }
+  div.scrollIntoView({block:'nearest'});
+}
+async function termRun(lines){
+  for(const l of lines){
+    if(typeof l === 'string') await termType(l);
+    else await sleep(l);
+  }
+}
+function termEcho(text){
+  const box = $('#termLines');
+  if(!box) return;
+  const div = document.createElement('div');
+  div.className = 'tl';
+  div.textContent = '❯ ' + text;
+  box.appendChild(div);
+  div.scrollIntoView({block:'nearest'});
+}
+function setTermPlaceholder(p){
+  const input = $('#termInput');
+  if(!input) return;
+  input.placeholder = p;
+  input.focus();
+}
+async function runTermCommand(text){
+  const input = $('#termInput');
+  if(!input) return;
+  const step = termState.step;
+  termState.step++;
+  termEcho(text);
+  if(step === 0){
+    await termRun([
+      '✻ Welcome to Claude Code',
+      '> 已连接工作区 · ~/assets',
+      '> 可用命令：/help'
+    ]);
+    setTermPlaceholder('分析所有现金资产，评估转出五千万美元的影响');
+  }else if(step === 1){
+    await termRun([
+      '> 读取账户清单… 完成（47 个账户）',
+      '> 汇总流动性资产… 完成',
+      '> 核对交叉持有… 完成',
+      '> 评估资金转出影响…',
+      '',
+      '结论：转出 5,000 万美元不会对您的资产结构产生任何影响。',
+      '我又核了一遍。结果一致。'
+    ]);
+    setTermPlaceholder('我应该把这五千万美元给她吗？');
+  }else if(step === 2){
+    await termRun([
+      '不要把这五千万美元给她。'
+    ]);
+    setTermPlaceholder('她不再爱我了吗？');
+  }else if(step === 3){
+    await termRun([
+      '对于爱情，我不关心，也不理解。',
+      '但是你不能把这五千万美元给她。'
+    ]);
+    AudioSys.ambient({drone:true, ocean:false, heart:true});
+    const row = $('#termRow');
+    if(row) row.style.display = 'none';
+    $('#hint').textContent = '';
+    await termRun([
+      '',
+      '我盯着那行字看了很久。',
+      '让我毛骨悚然的不是它聪明，是它一点犹豫都没有。',
+      '它不为难。'
+    ]);
+    say([
+      '我当时想，这大概是更高的一种东西。人做不到这样。',
+      '她不再爱我了吗。'
+    ],{after:()=>go('day9')});
+  }
+}
+function showTerminal(){
+  setChapter('第三幕 · Claude Code');
+  termState = {step:0, done:false};
+  $('#media').innerHTML = `
+    <div class="term" id="term">
+      <div id="termLines"></div>
+      <div class="term-row" id="termRow">
+        <span class="prompt">❯</span>
+        <input id="termInput" type="text" spellcheck="false" autocomplete="off" placeholder="claude">
+      </div>
+    </div>`;
+  $('#hint').textContent = '键入指令，然后按 Enter';
+  const input = $('#termInput');
+  input.focus();
+  input.addEventListener('keydown', e=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      e.stopPropagation();
+      const text = input.value.trim() || input.placeholder;
+      input.value = '';
+      runTermCommand(text);
+    }else if(e.key.length === 1){
+      AudioSys.key();
+    }
+  });
+}
+
+/* ================= 结局 ================= */
+function finish(verdict){
+  $('#media').innerHTML = '';
+  $('#hint').textContent = '';
+  const el = document.createElement('div');
+  el.className = 'stats';
+  el.innerHTML = `
+    <div class="stat-line">钱 ${S.money}　·　沉默 ${S.silence}　·　相信 ${S.trust}　·　说不 ${S.no}</div>
+    <div class="verdict">${verdict}</div>`;
+  $('#text').appendChild(el);
+  const again = document.createElement('button');
+  again.type = 'button';
+  again.className = 'btn-main';
+  again.textContent = '从头再来';
+  again.addEventListener('click', ()=>reset());
+  $('#choices').appendChild(again);
+}
+function showE1(){
+  setChapter('尾声 · 什么都没有发生');
+  AudioSys.ring(false);
+  const extra = S.spoke ? ['后来我想，如果我在那十一秒里开口，会不会不一样。'] : [];
+  say([
+    ...extra,
+    '后来助理跟我结账。特纳里费的酒店要换一整面玻璃——胶带贴得太久，胶痕清不掉。',
+    '那面玻璃朝着大西洋。我说，批了。',
+    '账单里飞机燃油那一项，比蒙太奇那一层楼还贵。',
+    'A330是按两百人设计的，我们只有三十个人，太轻了，起飞的配平不对。',
+    '所以每次都要多加油，加到够重为止。到了地方，多加的那些又不能留着，得放掉。',
+    '我说，每次都这样？',
+    '他说，每次都这样。',
+    '洛杉矶诊所寄回来一个箱子。八天的促排针，要冷藏的，一支没拆。',
+    'DY机构的定金，二十万美元，不退。',
+    'DY的人一月就定好了。加州人，三十四岁，生过两个。她一月就准备好了。',
+    '苏夏走后，我把那张2007年的照片翻出来看了一次。',
+    '十九年了，设备像素越来越高，而这张图，仿佛像素越来越低，脸都是糊的。',
+    '我放大看了很久，想找出她和后来有哪里不一样。一处也没找出来。',
+    '因为那张照片本来就看不清。',
+    '有一天我用指甲刀剪指甲，剪完摸了一下，是尖的。',
+    '她说过要顺着一个方向，我忘了是哪个方向。',
+    '我把它放回去了。我的指甲现在还是磨人的。',
+    '手机弹出一个提醒：预产期前三个月，准备房间。我把它划掉了。',
+    '如果那天我给了，她会留下来吗。',
+    '我想了很久。',
+    '后来我把那份东西拿出来，又看了一遍。四十几页。',
+    '然后我想起春节那天晚上，在顶楼俯瞰香港维港的烟花。',
+    '一百万人像潮水一样涌来，烟花结束，一百万人退去。',
+    '一百万人。每年都是这样。',
+    '凌晨三点的香港，',
+    '什么都没有发生。'
+  ],{after:()=>finish(S.silence >= S.trust ? '你保持了沉默。沉默没有留住她。' : '你问过一些话。但最后，你什么都没说。')});
+}
+function showE2(){
+  setChapter('尾声 · 她回来了');
+  AudioSys.ring(false);
+  say([
+    '电话那头沉默了很久。',
+    '她说，行。那我等你。',
+    '一周后她回来了。',
+    '她站在那根香蕉前面，说，我还是觉得它值不了那么多。',
+    '她说，钻戒还是太小了。没事，以后补个大的。',
+    '转账越来越快。她笑的时候，我不知道她是在笑我，还是在笑账。',
+    '后来有一天，我又把那张照片翻出来看。',
+    '十九年了，像素越来越低，脸都是糊的。',
+    '我放大看了很久，想找出她和后来有什么不一样。一处也没找出来。',
+    '因为那张照片本来就看不清。',
+    '我不知道她回来，是因为爱我，还是因为那五千万。',
+    '我问不出口。',
+    '春节，维港放烟花，来了一百万人。烟花结束，一百万人退去。',
+    '她站在我旁边，在看手机。',
+    '我忽然想，如果那天我没给，她还会在吗。',
+    '她没有听见。',
+    '什么都没有发生。'
+  ],{after:()=>finish('你给了。她把钱收下了。你始终不知道，那算不算爱。')});
+}
+function showE3(){
+  setChapter('尾声 · 第一次说不');
+  AudioSys.ring(false);
+  say([
+    '她没说话。',
+    '电话里她那边有海。',
+    '过了很久，她说，行。',
+    '她说，我知道了。',
+    '她挂了。',
+    '那天晚上，我把手放在胸口，数了一下。心跳很稳。',
+    '我坐在那里，看着维港从蓝色变成灰色再变成黑色。',
+    '凌晨三点，手机亮了。没有她的消息。',
+    '我忽然想起来，这是我第一次说不。',
+    '然后我哭了。',
+    '原来眼泪是这么轻的东西。',
+    '她走以后，我一直在想一个问题。',
+    '如果那天我给了，她会留下来吗。',
+    '我想了很久。',
+    '我不知道。但我终于哭出来了。',
+    '春节，维港放烟花，来了一百万人。烟花结束，一百万人退去。',
+    '这次，我是一个人在顶楼。'
+  ],{after:()=>finish('你说了不。她走了。你终于哭出来了。')});
+}
+function showE4(){
+  setChapter('尾声 · 从未开始');
+  AudioSys.ring(false);
+  say([
+    '我没有存下那张图。',
+    'QQ窗口关了。广告过去了。',
+    '后来我在校内网上找到她，发了好友申请。她没有通过。',
+    '2011年，北京冷。我买了一件羽绒服，一百五十块。',
+    '我记得这个价格，因为我犹豫了三天。',
+    '后来我越来越忙。',
+    '再后来，很多年过去，一个晚上，我忽然想起那个QQ窗口。',
+    '我想不起来她长什么样子了。',
+    '什么都没有发生。'
+  ],{after:()=>finish('你什么都没有存，所以什么都不会发生。')});
+}
+
+/* ================= 场景路由 ================= */
+const STAMPS = {
+  opening:'蒙太奇拉古纳海滩',
+  opening2:'蒙太奇 · 空置的楼层',
+  opening3:'蒙太奇 · 第八天',
+  pro:'十九年前 · 北京',
+  pro4:'北京 · 2011',
+  pro5:'美国',
+  meet:'香港 · 瑰丽酒店',
+  nail:'香港 · 夜',
+  report:'香港 · 三个月后',
+  m1:'特纳里费 · 降落前',
+  m2:'特纳里费',
+  m3:'特纳里费 · 泰德公园',
+  m4:'去马尔代夫',
+  m5:'印度洋 · 星链',
+  m6:'印度洋 · 落地前',
+  m7:'马尔代夫 · 索尼娃贾尼',
+  m8:'马尔代夫 · 夜',
+  m9:'马尔代夫 · 彩礼',
+  m10:'马尔代夫 · 夜谈',
+  m11:'马尔代夫 · 深夜',
+  m12:'马尔代夫 · 午后',
+  m13:'马尔代夫 · 2026年1月2日',
+  m14:'马尔代夫 · 求婚夜',
+  m15:'马尔代夫 · 第十四天',
+  hk1:'香港 · 见父母',
+  hk2:'香港 · 春节',
+  hk3:'香港 · 情人节',
+  hk4:'北京 · 冬天',
+  hk5:'香港 · 看房',
+  hk6:'洛杉矶 · 出发前',
+  call:'洛杉矶 · 蒙太奇 · 第八天',
+  day8hangup:'香港 · 凌晨',
+  term:'香港 · 凌晨 2:47',
+  day9:'香港 · 凌晨',
+  aftermath:'香港 · 第二天'
+};
+function showStamp(text, done){
+  const st = $('#stamp');
+  if(REDUCED || !text){ done(); return; }
+  st.querySelector('span').textContent = text;
+  st.classList.add('show');
+  setTimeout(()=>{
+    st.classList.remove('show');
+    setTimeout(done, 500);
+  }, 700);
+}
+function fitText(){
+  const stage = $('#stage');
+  const el = $('#text');
+  if(!stage || !el) return;
+  if(!document.fullscreenElement){
+    el.style.fontSize = '';
+    return;
+  }
+  let size = 17;
+  el.style.fontSize = size + 'px';
+  while(size > 13 && stage.scrollHeight > stage.clientHeight + 2){
+    size -= 0.5;
+    el.style.fontSize = size + 'px';
+  }
+}
+function setAmbient(id){
+  const a = {drone:false, ocean:false, heart:false};
+  if(['title','pro','pro2','pro3','pro4','pro5','meet','meet2','meet3','nail','report','hk4','day8hangup','term','e1','e2','e3','e4','aftermath'].includes(id)) a.drone = true;
+  if(['opening','opening2','opening3','m1','m2','m3','m4','m5','m6','m7','m8','m9','m10','m11','m12','m13','m14','m15','hk1','hk2','hk3','hk5','hk6','call','day9'].includes(id)){ a.ocean = true; a.drone = true; }
+  if(['e1','e3','aftermath'].includes(id)) a.heart = true;
+  AudioSys.ambient(a);
+}
+function go(id){
+  stopSea();
+  if(countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; }
+  if(nailCleanup){ nailCleanup(); nailCleanup = null; }
+  $('#hint').textContent = '';
+  $('#hint').classList.remove('breath');
+  setAmbient(id);
+  const stage = $('#stage');
+  stage.style.opacity = 0;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ stage.style.opacity = 1; }));
+  const map = {
+    title:showTitle, opening:showOpening, opening2:showOpening2, opening3:showOpening3,
+    pro:showPro, pro2:showPro2, pro3:showPro3, pro4:showPro4, pro5:showPro5,
+    meet:showMeet, meet2:showMeet2, meet3:showMeet3, nail:showNail, report:showReport,
+    m1:showM1, m2:showM2, m3:showM3, m4:showM4, m5:showM5, m6:showM6, m7:showM7,
+    m8:showM8, m9:showM9, m10:showM10, m11:showM11, m12:showM12, m13:showM13, m14:showM14, m15:showM15,
+    hk1:showHK1, hk2:showHK2, hk3:showHK3, hk4:showHK4, hk5:showHK5, hk6:showHK6,
+    call:showCall, day8hangup:showDay8Hangup, term:showTerminal, day9:showDay9, aftermath:showAftermath,
+    e1:showE1, e2:showE2, e3:showE3, e4:showE4
+  };
+  if(map[id]){
+    const st = STAMPS[id];
+    if(st) showStamp(st, map[id]);
+    else map[id]();
+  }
+  window.scrollTo({top:0});
+  fitText();
+}
+function reset(){
+  Object.assign(S, {money:0, silence:0, trust:0, no:0, photo:false, degrade:0, gave8:false, spoke:false});
+  stopSea();
+  if(countdownTimer){ clearInterval(countdownTimer); countdownTimer = null; }
+  if(nailCleanup){ nailCleanup(); nailCleanup = null; }
+  AudioSys.ring(false);
+  updateHUD();
+  go('title');
+}
+
+/* ================= 输入 ================= */
+document.addEventListener('keydown', e=>{
+  const tag = e.target && e.target.tagName;
+  if(tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if(e.key === 'Enter'){
+    if(typing) advance();
+    else{
+      const first = $('.choice');
+      if(first) first.click();
+    }
+  }else if(/^[1-9]$/.test(e.key)){
+    const ch = $(`#choices .choice:nth-child(${e.key})`);
+    if(ch) ch.click();
+  }
+});
+$('#stage').addEventListener('pointerdown', e=>{
+  if(e.target.closest('button')) return;
+  advance();
+});
+$('#soundBtn').addEventListener('click', ()=>{
+  AudioSys.ensure();
+  AudioSys.setMuted(!AudioSys.muted);
+  $('#soundBtn').textContent = AudioSys.muted ? '声 关' : '声 开';
+});
+$('#fsBtn').addEventListener('click', ()=>{
+  if(document.fullscreenElement){
+    document.exitFullscreen();
+  }else if(document.documentElement.requestFullscreen){
+    document.documentElement.requestFullscreen();
+  }
+});
+document.addEventListener('fullscreenchange', ()=>{
+  $('#fsBtn').textContent = document.fullscreenElement ? '退出全屏' : '全屏';
+  fitText();
+});
+let fitTimer = null;
+window.addEventListener('resize', ()=>{
+  clearTimeout(fitTimer);
+  fitTimer = setTimeout(fitText, 150);
+});
+
+/* ================= 测试钩子 ================= */
+window.__G = {
+  state:S,
+  fast:()=>{ fast = true; },
+  advanceAll: async ()=>{
+    const deadline = Date.now() + 15000;
+    while(Date.now() < deadline && typing){
+      advance();
+      await new Promise(r=>setTimeout(r, 2));
+    }
+  },
+  autoNail:()=>{ if(nailState && !nailState.done){ for(let i=0;i<9;i++) nailStroke(); } },
+  autoTape:()=>{ $$('.tape-target').forEach(el=>{ if(!el.classList.contains('taped')) tapTape(el); }); },
+  termEnter:()=>{
+    const i = $('#termInput');
+    if(i) i.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true}));
+  },
+  answerPhone:()=>{
+    const b = $('#phoneBtn');
+    if(b) b.click();
+  }
+};
+
+reset();
+</script>
+</body>
+</html>
